@@ -1,0 +1,135 @@
+<!-- client side -->
+
+<!doctype html>
+<html>
+
+<!-- HTML HEAD -->
+<head>
+	<title>Line Chart</title>
+	<!-- Source for Canvas JS - points to the web - needs internet -->
+	<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+	<!-- Source for Socket.io - this one is local -->
+	<script src="/socket.io/socket.io.js"></script>
+
+	<style>
+  	canvas{
+  		-moz-user-select: none;
+  		-webkit-user-select: none;
+  		-ms-user-select: none;
+  	}
+	</style>
+</head>
+
+<body>
+	<!-- HTML layout -->
+  <h1>Swiss Army Tape Measure</h1> <br>
+	<div id="lidar_disp"></div>
+	<div id="ir_disp"></div>
+	<div id="u_disp"></div>
+	<div id="chartContainer" style="height: 300px; width: 100%;"></div>
+
+	<!-- Script to handle charting -->
+	<script>
+		var lidar_dps = [];
+		var ir_dps = [];
+		var u_dps = [];
+
+		var chart = new CanvasJS.Chart("chartContainer", {
+			exportEnabled: true,
+			title :{
+				text: "Sensor Measurements"
+			},
+			axisY: {
+				includeZero: false
+			},
+			data: [{
+				type: "line",
+				markerSize: 0,
+				showInLegend: true,
+				legendText: "Lidar",
+				dataPoints: lidar_dps
+			},
+			{
+				type: "line",
+				markerSize: 0,
+				showInLegend: true,
+				legendText: "IR",
+				dataPoints: ir_dps
+			},
+			{
+				type: "line",
+				markerSize: 0,
+				showInLegend: true,
+				legendText: "Ultrasonic",
+				dataPoints: u_dps
+			}]
+
+		});
+		// number of dataPoints visible at any point
+		var dataLength = 50;
+	</script>
+
+	<!-- Script to handle socket and also to update chart datapoints -->
+	<script>
+		var index = 0;
+		var socket = io();
+
+		socket.on('lidar', function(lidar_msg){
+			console.log(lidar_msg);
+			document.getElementById("lidar_disp").innerHTML = lidar_msg;
+
+			// Update data array
+			lidar_dps.push({
+				x: index,
+				y: lidar_msg
+			});
+			index++;
+
+			if (lidar_dps.length > dataLength) {
+				lidar_dps.shift();
+			}
+			chart.render();
+
+		});
+
+		socket.on('ir', function(ir_msg){
+			console.log(ir_msg);
+			document.getElementById("ir_disp").innerHTML = ir_msg;
+
+			// Update data array
+			ir_dps.push({
+				x: index,
+				y: ir_msg
+			});
+			index++;
+
+			if (ir_dps.length > dataLength) {
+				ir_dps.shift();
+			}
+			chart.render();
+
+		});
+
+		socket.on('ultra', function(u_msg){
+			console.log(u_msg);
+			document.getElementById("u_disp").innerHTML = u_msg;
+
+			// Update data array
+			u_dps.push({
+				x: index,
+				y: u_msg
+			});
+			index++;
+
+			if (u_dps.length > dataLength) {
+				u_dps.shift();
+			}
+			chart.render();
+
+		});
+
+	</script>
+
+</body>
+
+</html>
